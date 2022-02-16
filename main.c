@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <stdbool.h>
 
 /**
  * @brief Checks if port number is in bounds
@@ -134,6 +135,25 @@ void get_cpu_model(char *str){
     pclose(file);
 }
 
+/**
+ * @brief Checks if request is containing the path specified
+ * 
+ * @param request HTTP request
+ * @param path the path which will be checked (should be without '/' at the end, ie.: 'cpu-name/' is wrong, 'cpu-name' is correct)
+ * @return true if path in request matches the specified path
+ * @return false otherwise
+ */
+// bool is_URL_path(char *request, char *path){
+    
+//     printf("The specified path is %s\n",path_r);
+//     return strcmp(path, path_r) == 0;
+// }
+
+char wrong_req[] = 
+    "HTTP/1.1 400 Bad request\r\n"
+    "Content-Type: text/plain\r\n\r\n"
+    "Bad request!\n";
+
 int main(int argc, char const *argv[])
 {
     char response_prefix[] = 
@@ -219,12 +239,20 @@ int main(int argc, char const *argv[])
             memset(buffer, 0, 2048);
             read(sct_client,buffer,2047);
 
-            // printf("%s\n",buffer);
+            
+            char * method = strtok(buffer," ");
+            if(strcmp(method,"GET")){
+                write(sct_client, wrong_req, sizeof(wrong_req) - 1);
+            }
+
+            char * path = strtok(NULL," ");
+
+            // printf("request header:\n%s",buffer);
 
             /**
              *      /hostname
              */
-            if(strncmp(buffer, "GET /hostname", 13) == 0){
+            if( !strcmp(path,"/hostname") ){
                 char *message = hostname;
                 char res[strlen(response_prefix)+strlen(message)+2];
                 
@@ -234,7 +262,7 @@ int main(int argc, char const *argv[])
             /**
              *      /cpu-name
              */
-            else if(strncmp(buffer, "GET /cpu-name", 13) == 0){
+            else if(!strcmp(path,"/cpu-name")){
                 char *message = cpu_model;
                 char res[strlen(response_prefix)+strlen(message)+2];
                 
@@ -244,7 +272,7 @@ int main(int argc, char const *argv[])
             /**
              *      /load
              */
-            else if(strncmp(buffer, "GET /load", 9) == 0){
+            else if(!strcmp(path,"/load")){
                 char message[32];
                 double load = get_cpu_load();
                 sprintf(message,"%lf",load);
@@ -259,13 +287,7 @@ int main(int argc, char const *argv[])
              *      WRONG REQUEST
              */
             else{
-
-                char res[] = 
-                    "HTTP/1.1 400 Bad request\r\n"
-                    "Content-Type: text/plain; charset=UTF-8\r\n\r\n"
-                    "Bad request!";
-
-                write(sct_client, res, sizeof(res) - 1);
+                write(sct_client, wrong_req, sizeof(wrong_req) - 1);
             }
 
             close(sct_client);
