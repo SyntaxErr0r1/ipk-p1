@@ -149,6 +149,22 @@ void get_cpu_model(char *str){
 //     return strcmp(path, path_r) == 0;
 // }
 
+/**
+ * @brief removes redundant '/' symbol at the end of a path
+ * @param path to be fixed
+ */
+void path_unite(char *path){
+    int path_len = strlen(path);
+    // fprintf(stderr,"Last character of path is %c len:%d\n",,path_len);
+    if(path_len > 1 && path[path_len-1] == '/'){
+        path[path_len-1] = '\0';
+    }
+}
+
+char response_prefix[] = 
+    "HTTP/1.1 200 OK\r\n"
+    "Content-Type: text/plain; charset=UTF-8\r\n\r\n";
+
 char wrong_req[] = 
     "HTTP/1.1 400 Bad request\r\n"
     "Content-Type: text/plain\r\n\r\n"
@@ -156,10 +172,6 @@ char wrong_req[] =
 
 int main(int argc, char const *argv[])
 {
-    char response_prefix[] = 
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: text/plain; charset=UTF-8\r\n\r\n";
-
 
     /**
      * ARG CHECK
@@ -246,6 +258,8 @@ int main(int argc, char const *argv[])
             }
 
             char * path = strtok(NULL," ");
+            
+            path_unite(path);
 
             // printf("request header:\n%s",buffer);
 
@@ -254,7 +268,7 @@ int main(int argc, char const *argv[])
              */
             if( !strcmp(path,"/hostname") ){
                 char *message = hostname;
-                char res[strlen(response_prefix)+strlen(message)+2];
+                char res[strlen(response_prefix)+strlen(message)+1];
                 
                 sprintf(res,"%s%s",response_prefix,message);
                 write(sct_client, res, sizeof(res) - 1);
@@ -264,7 +278,7 @@ int main(int argc, char const *argv[])
              */
             else if(!strcmp(path,"/cpu-name")){
                 char *message = cpu_model;
-                char res[strlen(response_prefix)+strlen(message)+2];
+                char res[strlen(response_prefix)+strlen(message)+1];
                 
                 sprintf(res,"%s%s",response_prefix,message);
                 write(sct_client, res, sizeof(res) - 1);
@@ -275,14 +289,13 @@ int main(int argc, char const *argv[])
             else if(!strcmp(path,"/load")){
                 char message[32];
                 double load = get_cpu_load();
-                sprintf(message,"%lf",load);
+                sprintf(message,"%lf%%",load*100);
 
-                char res[strlen(response_prefix)+strlen(message)+2];
+                char res[strlen(response_prefix)+strlen(message)+1];
                 
                 sprintf(res,"%s%s",response_prefix,message);
                 write(sct_client, res, sizeof(res) - 1);
             }
-
             /**
              *      WRONG REQUEST
              */
