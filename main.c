@@ -253,8 +253,13 @@ int main(int argc, char const *argv[])
 
             
             char * method = strtok(buffer," ");
+            
+            /**
+             * CHECK HTTP METHOD
+             */
             if(strcmp(method,"GET")){
                 write(sct_client, wrong_req, sizeof(wrong_req) - 1);
+                goto connection_close;  //I hope this is an appropriate use of goto.
             }
 
             char * path = strtok(NULL," ");
@@ -302,6 +307,8 @@ int main(int argc, char const *argv[])
             else{
                 write(sct_client, wrong_req, sizeof(wrong_req) - 1);
             }
+
+            connection_close:
 
             close(sct_client);
             sct_client = -1;

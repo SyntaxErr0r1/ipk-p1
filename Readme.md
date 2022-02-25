@@ -49,7 +49,7 @@ We check whether the port number was correctly specified.
 #### 4.1 Setup
 
 We have buffer for storing the request
-We use function `socket()` to create the server socket. `<!-- `setsockopt` to set  -->`
+We use function `socket()` to create the server socket. `<!-- `setsockopt ` to set  -->`
 Structures for server and client addresses are then specified.
 
 #### 4.2 Connection
@@ -61,3 +61,17 @@ For paths `/hostname` and `cpu-name` we send back the string which is saved in a
 When requesting `/load`, the `get_cpu_load()` function is called.
 In order to respond in the correct way, response prefix is appended to the string.
 Then the response is sent using `write()` and the connection closes.
+
+### 5. Usage
+
+To compile the source file you can use the makefile by running: ```make```
+
+Running the server:
+``./hinfosvc <port-number>``
+The server can be closed by pressing CTRL+C.
+
+### 6. Practical use
+
+I created a simple Vue.js app to show a possible use for this simple server app. In this case i display the information about few computers running the server.
+
+![alt text](./showcase.png)
