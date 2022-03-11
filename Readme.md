@@ -33,10 +33,12 @@ Then I used `awk` to extract the line and column containing the CPU model.
 ---
 
 The current load can be read from `/proc/stat`.
+After reading the provided links in the project specification I understood the process of calculating the load.
 We need to read the file 2 times.
 Then we calculate how much time was the CPU idling in those 2 reads separately.
 Consequently we determine the difference in the idle and total times
 We then calculate the CPU load based on the differences in the total and idle times.
+For this purpose I decided to use `long long` after finding out that `integer` was not enough on merlin. 
 
 ### 4. The server
 
@@ -64,7 +66,7 @@ Then the response is sent using `write()` and the connection closes.
 
 ### 5. Usage
 
-To compile the source file you can use the makefile by running: ```make```
+To compile the source file you can use the makefile by running: ``make``
 
 Running the server:
 ``./hinfosvc <port-number>``

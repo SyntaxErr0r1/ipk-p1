@@ -153,12 +153,23 @@ void get_cpu_model(char *str){
  * @brief removes redundant '/' symbol at the end of a path
  * @param path to be fixed
  */
-void path_unite(char *path){
+void path_unify(char *path){
     int path_len = strlen(path);
     // fprintf(stderr,"Last character of path is %c len:%d\n",,path_len);
     if(path_len > 1 && path[path_len-1] == '/'){
         path[path_len-1] = '\0';
     }
+}
+
+/**
+ * @brief closes the socket
+ * @param socket 
+ */
+void close_connection(int *socket){
+    close(*socket);
+    (*socket) = -1;
+    printf("Closed connection...\n");
+    exit(0);
 }
 
 char response_prefix[] = 
@@ -170,12 +181,14 @@ char wrong_req[] =
     "Content-Type: text/plain\r\n\r\n"
     "Bad request!\n";
 
+char wrong_path[] = 
+    "HTTP/1.1 404 Not Found\r\n"
+    "Content-Type: text/plain\r\n\r\n"
+    "Not Found!\n";
+
 int main(int argc, char const *argv[])
 {
 
-    /**
-     * ARG CHECK
-     */
     if(argc < 2){
         fprintf(stderr,"Error: Not enough arguments\n");
         fprintf(stderr,"Usage:\n");
@@ -192,15 +205,15 @@ int main(int argc, char const *argv[])
     /**
      *  GET SYSTEM INFO 
      */
-    fprintf(stderr,"CPU load is %.6lf\n",get_cpu_load());
+    // fprintf(stderr,"CPU load is %.6lf\n",get_cpu_load());
     
     char hostname[255];
     get_hostname(hostname);
-    fprintf(stderr,"hostname is %s",hostname);
+    // fprintf(stderr,"hostname is %s",hostname);
     
     char cpu_model[255];
     get_cpu_model(cpu_model);
-    fprintf(stderr,"CPU model is %s",cpu_model);
+    // fprintf(stderr,"CPU model is %s",cpu_model);
 
 
     /**
@@ -222,11 +235,11 @@ int main(int argc, char const *argv[])
 
     
     if( bind(sct, (struct sockaddr*) &address, sizeof(address) ) == -1){
-        fprintf(stderr,"Error at BIND!");
+        fprintf(stderr,"Error at BIND, port might be in use!\n");
         exit(1);
     }
     if( listen(sct, 10) == -1){
-        fprintf(stderr,"Error at LISTEN!");
+        fprintf(stderr,"Error at LISTEN!\n");
         exit(1);
     }
     fprintf(stderr,"Listening on port %s ...\n",port);
@@ -259,14 +272,12 @@ int main(int argc, char const *argv[])
              */
             if(strcmp(method,"GET")){
                 write(sct_client, wrong_req, sizeof(wrong_req) - 1);
-                goto connection_close;  //I hope this is an appropriate use of goto.
+                close_connection(&sct_client);
             }
 
             char * path = strtok(NULL," ");
             
-            path_unite(path);
-
-            // printf("request header:\n%s",buffer);
+            path_unify(path);
 
             /**
              *      /hostname
@@ -298,22 +309,17 @@ int main(int argc, char const *argv[])
 
                 char res[strlen(response_prefix)+strlen(message)+1];
                 
-                sprintf(res,"%s%s",response_prefix,message);
-                write(sct_client, res, sizeof(res) - 1);
+                sprintf(res,"%s%s\n",response_prefix,message);
+                write(sct_client, res, sizeof(res) - 0);
             }
             /**
-             *      WRONG REQUEST
+             *      WRONG PATH
              */
             else{
-                write(sct_client, wrong_req, sizeof(wrong_req) - 1);
+                write(sct_client, wrong_path, sizeof(wrong_path) - 1);
             }
 
-            connection_close:
-
-            close(sct_client);
-            sct_client = -1;
-            printf("Closed connection...\n");
-            exit(0);
+            close_connection(&sct_client);
         }
 
         close(sct_client);
